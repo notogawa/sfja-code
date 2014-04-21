@@ -460,7 +460,7 @@ Proof.
 (*
 練習問題: ★★★★, optional (double_even_pfobj)
 
-上記のタクティックによる証明でどのような証明オブジェクトが構築されるかを予想しなさい。 
+上記のタクティックによる証明でどのような証明オブジェクトが構築されるかを予想しなさい。
 (答を確かめる前に、Case を除去しましょう。
  これがあると証明オブジェクトが少し見づらくなります。)
 
@@ -468,7 +468,7 @@ Proof.
 
 (* Check nat_ind. *)
 (* nat_ind
-      : forall P : nat -> Prop, 
+      : forall P : nat -> Prop,
         P 0 -> (forall n : nat, P n -> P (S n)) -> forall n : nat, P n *)
 
 Definition double_even_pfobj : forall n, ev (double n) :=
@@ -1202,6 +1202,66 @@ Fixpoint palindrome_converse {X:Type} (l:list X) (H : l = rev l) : pal l :=
  *)
 
 
+Definition last {X} (l:list X) {notnil:beq_nat 0 (length l) = false} : X.
+  intros.
+  induction l.
+  inversion notnil.
+  destruct l.
+  exact x.
+  apply IHl.
+  reflexivity.
+Defined.
+
+Eval simpl in (last [0]).
+Eval simpl in (last [0,1]).
+Eval simpl in (last [0,1,2]).
+
+Definition init {X} (l:list X) {notnil:beq_nat 0 (length l) = false} : list X.
+  intros.
+  induction l.
+  inversion notnil.
+  destruct l.
+  exact [].
+  apply (fun xs => x :: xs).
+  apply IHl.
+  reflexivity.
+Defined.
+
+Eval simpl in (init [0]).
+Eval simpl in (init [0,1]).
+Eval simpl in (init [0,1,2]).
+
+Lemma cong_cons :
+  forall {X} {x:X} {l1 l2:list X}, l1 = l2 -> x :: l1 = x :: l2.
+Proof.
+  intros.
+  rewrite H.
+  reflexivity.
+Qed.
+
+Lemma snoc_init_last_is_id :
+  forall {X} (l:list X) {notnil:beq_nat 0 (length l) = false}, l = snoc (@init X l notnil) (@last X l notnil).
+Proof.
+  intros.
+  induction l.
+  inversion notnil.
+  destruct l.
+  reflexivity.
+  apply cong_cons.
+  apply IHl.
+Qed.
+
+Lemma rev_last :
+  forall {X} (x1 x2:X) (l:list X), x1 ::x2 :: l = rev (x1 :: x2 :: l) -> x1 = @last X (x2 :: l) eq_refl.
+Proof.
+  intros.
+  rewrite @snoc_init_last_is_id with X (x1 :: x2 :: l) eq_refl in H.
+  rewrite rev_snoc in H at 1.
+  rewrite <- @snoc_init_last_is_id with X (x1 :: x2 :: l) eq_refl in H.
+  inversion H.
+  reflexivity.
+Qed.
+
 (*
 Theorem palindrome_converse :
   forall X (l:list X), l = rev l -> pal l.
@@ -1250,7 +1310,7 @@ Proof.
       rewrite -> rev_def in H2.
       rewrite <- H in H2.
       (* -- assert (snoc (xs ++ rev xs) x = xs ++ rev (x :: xs)) *)
-  
+
   inversion H3.
   (* l = [] *) intros palv. apply pal_0.
   (* l = x :: xs *)
@@ -1286,15 +1346,15 @@ Proof.
  ・ list nat 上に、そのリストがサブシーケンスであることを意味する
     ような命題 subseq を定義しなさい。（ヒント：三つのケースが必要
     になります）
-   
+
  ・ サブシーケンスである、という関係が「反射的」であることを証明し
     なさい。つまり、どのようなリストも、それ自身のサブシーケンスで
     あるということです。
-   
+
  ・ 任意のリスト l1、 l2、 l3 について、もし l1 が l2 のサブシーケ
     ンスならば、 l1 は l2 ++ l3 のサブシーケンスでもある、というこ
     とを証明しなさい。.
-   
+
  ・ （これは少し難しいですので、任意とします）サブシーケンスという
     関係は推移的である、つまり、 l1 が l2 のサブシーケンスであり、
     l2 が l3 のサブシーケンスであるなら、 l1 は l3 のサブシーケン
